@@ -16,13 +16,15 @@ abstract class AsyncPresenter<V>(private val schedulerProvider: SchedulerProvide
     var coroutineScope: CoroutineScope? = null
 
     fun launch(job: suspend CoroutineScope.() -> Unit) {
-        coroutineScope?.apply {
-            if (isActive) {
-                launch(schedulerProvider.ui(), block = job)
-            } else {
-                System.err.println("$job cancelled!")
+        if (coroutineScope != null)
+            coroutineScope?.apply {
+                if (isActive) {
+                    launch(schedulerProvider.ui(), block = job)
+                } else {
+                    System.err.println("$job cancelled!")
+                }
             }
-        }
+        else System.err.println("$job aborted!")
     }
 
     suspend fun <T> onIO(job: suspend CoroutineScope.() -> T) = withContext(schedulerProvider.io(), block = job)
