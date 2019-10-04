@@ -12,22 +12,32 @@ import kotlinx.coroutines.*
  */
 abstract class AsyncPresenter<V>(private val schedulerProvider: SchedulerProvider) : BasePresenter<V> {
 
-    private val supervisorJob = SupervisorJob()
-    val coroutineScope: CoroutineScope = CoroutineScope(Dispatchers.Main + supervisorJob)
+    var supervisorJob: CompletableJob? = null
+    var coroutineScope: CoroutineScope? = null
 
     fun launch(job: suspend CoroutineScope.() -> Unit) {
-        coroutineScope.launch(schedulerProvider.ui(), block = job)
+        coroutineScope?.apply {
+            if (isActive) {
+                launch(schedulerProvider.ui(), block = job)
+            } else {
+                System.err.println("$job cancelled!")
+            }
+        }
     }
 
     suspend fun <T> onIO(job: suspend CoroutineScope.() -> T) = withContext(schedulerProvider.io(), block = job)
 
     override fun subscribe(view: V) {
+        supervisorJob = SupervisorJob()
+        coroutineScope = CoroutineScope(Dispatchers.Main + supervisorJob!!)
         this.view = view
     }
 
     @CallSuper
     override fun unSubscribe() {
-        supervisorJob.cancel()
+        supervisorJob?.cancel()
+        supervisorJob = null
+        coroutineScope = null
         view = null
     }
 }

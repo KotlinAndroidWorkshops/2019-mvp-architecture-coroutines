@@ -12,5 +12,5 @@ import org.koin.dsl.module
  */
 val localAndroidDataSourceModule = module {
     single<JsonReader> { AndroidJsonReader(androidApplication()) }
-    single<WeatherDataSource> { FileDataSource(get(), true) }
+    single<WeatherDataSource> { FileDataSource(get(),get(), true) }
 }

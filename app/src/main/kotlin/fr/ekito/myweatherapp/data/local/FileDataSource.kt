@@ -3,16 +3,17 @@ package fr.ekito.myweatherapp.data.local
 import fr.ekito.myweatherapp.data.WeatherDataSource
 import fr.ekito.myweatherapp.data.json.Geocode
 import fr.ekito.myweatherapp.data.json.Weather
+import fr.ekito.myweatherapp.util.coroutine.SchedulerProvider
 import kotlinx.coroutines.*
 
 /**
  * Read json files and render weather date
  */
-class FileDataSource(val jsonReader: JsonReader, val delayed: Boolean) :
+class FileDataSource(val schedulerProvider: SchedulerProvider, val jsonReader: JsonReader, val delayed: Boolean) :
         WeatherDataSource {
 
     private val supervisorJob = SupervisorJob()
-    val coroutineScope: CoroutineScope = CoroutineScope(Dispatchers.IO + supervisorJob)
+    val coroutineScope: CoroutineScope = CoroutineScope(schedulerProvider.io() + supervisorJob)
 
     private val cities by lazy { jsonReader.getAllLocations() }
 
@@ -24,9 +25,9 @@ class FileDataSource(val jsonReader: JsonReader, val delayed: Boolean) :
     }
 
     override fun geocode(address: String): Deferred<Geocode> {
-        return coroutineScope.async {
+        return coroutineScope.async(schedulerProvider.io()) {
             if (delayed) {
-                delay(1_000)
+                delay(DELAY)
             }
             val addressToLC = address.toLowerCase()
             if (isKnownCity(addressToLC)) {
@@ -38,20 +39,21 @@ class FileDataSource(val jsonReader: JsonReader, val delayed: Boolean) :
     }
 
     override fun weather(lat: Double?, lon: Double?, lang: String): Deferred<Weather> {
-        return coroutineScope.async {
+        return coroutineScope.async(schedulerProvider.io()) {
             if (delayed) {
-                delay(1_000)
+                delay(DELAY)
             }
             val city = cityFromLocation(lat, lon)
             jsonReader.getWeather(city)
         }
     }
 
-    fun close(){
+    fun close() {
         supervisorJob.cancel()
     }
 
     companion object {
+        const val DELAY = 500L
         const val DEFAULT_CITY = "toulouse"
     }
 }

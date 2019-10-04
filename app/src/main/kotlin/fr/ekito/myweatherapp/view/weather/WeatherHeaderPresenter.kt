@@ -11,12 +11,14 @@ class WeatherHeaderPresenter(
 
     override var view: WeatherHeaderContract.View? = null
 
-    override fun loadNewLocation(location: String) = launch {
-        try {
-            val list = onIO { dailyForecastRepository.getWeather(location) }
-            view?.showLocationSearchSucceed(location)
-        } catch (e: Exception) {
-            view?.showLocationSearchFailed(location, e)
+    override fun loadNewLocation(location: String) {
+        launch {
+            try {
+                onIO { dailyForecastRepository.getWeather(location) }
+                view?.showLocationSearchSucceed(location)
+            } catch (e: Throwable) {
+                view?.showLocationSearchFailed(location, e)
+            }
         }
     }
 
