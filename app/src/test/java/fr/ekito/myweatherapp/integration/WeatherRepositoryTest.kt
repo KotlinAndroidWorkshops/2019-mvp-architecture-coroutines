@@ -3,7 +3,10 @@ package fr.ekito.myweatherapp.integration
 import fr.ekito.myweatherapp.di.testWeatherApp
 import fr.ekito.myweatherapp.domain.repository.DailyForecastRepository
 import junit.framework.Assert
+import kotlinx.coroutines.runBlocking
 import org.junit.After
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
 import org.junit.Before
 import org.junit.Test
 import org.koin.core.context.startKoin
@@ -30,30 +33,27 @@ class WeatherRepositoryTest : KoinTest {
     }
 
     @Test
-    fun testGetWeatherSuccess() {
-        repository.getWeather(location).blockingGet()
-        val test = repository.getWeather(location).test()
-        test.awaitTerminalEvent()
-        test.assertComplete()
+    fun testGetWeatherSuccess() = runBlocking {
+        repository.getWeather(location)
+        assertNotNull(repository.getWeather(location))
     }
 
     @Test
-    fun testCachedWeather() {
-        val l1 = repository.getWeather("Paris").blockingGet()
-        val l2 = repository.getWeather("Toulouse").blockingGet()
-        val l3 = repository.getWeather().blockingGet()
+    fun testCachedWeather() = runBlocking {
+        val l1 = repository.getWeather("Paris")
+        val l2 = repository.getWeather("Toulouse")
+        val l3 = repository.getWeather()
 
         Assert.assertEquals(l3, l2)
         Assert.assertNotSame(l1, l2)
     }
 
     @Test
-    fun testGetDetail() {
-        repository.getWeather(location).blockingGet()
-        val list = repository.getWeather(location).blockingGet()
+    fun testGetDetail() = runBlocking {
+        repository.getWeather(location)
+        val list = repository.getWeather(location)
         val first = list.first()
-        val test = repository.getWeatherDetail(first.id).test()
-        test.awaitTerminalEvent()
-        test.assertValue { it == first }
+        val value = repository.getWeatherDetail(first.id)
+        assertEquals(first, value)
     }
 }

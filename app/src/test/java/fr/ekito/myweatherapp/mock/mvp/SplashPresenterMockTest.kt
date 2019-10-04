@@ -2,25 +2,21 @@ package fr.ekito.myweatherapp.mock.mvp
 
 import fr.ekito.myweatherapp.domain.entity.DailyForecast
 import fr.ekito.myweatherapp.domain.repository.DailyForecastRepository
-import fr.ekito.myweatherapp.util.MockitoHelper
 import fr.ekito.myweatherapp.util.TestSchedulerProvider
 import fr.ekito.myweatherapp.view.splash.SplashContract
 import fr.ekito.myweatherapp.view.splash.SplashPresenter
-import io.reactivex.Single
+import io.mockk.coEvery
+import io.mockk.mockk
+import io.mockk.verifySequence
 import org.junit.Before
 import org.junit.Test
-import org.mockito.BDDMockito.given
-import org.mockito.Mock
-import org.mockito.Mockito.*
-import org.mockito.MockitoAnnotations
+import org.mockito.Mockito.mock
 
 class SplashPresenterMockTest {
 
     lateinit var presenter: SplashContract.Presenter
-    @Mock
-    lateinit var view: SplashContract.View
-    @Mock
-    lateinit var repository: DailyForecastRepository
+    val view: SplashContract.View = mockk(relaxed = true)
+    val repository: DailyForecastRepository = mockk(relaxed = true)
 
     // TODO uncomment to use LiveData in Test
 //    @get:Rule
@@ -28,8 +24,6 @@ class SplashPresenterMockTest {
 
     @Before
     fun before() {
-        MockitoAnnotations.initMocks(this)
-
         presenter = SplashPresenter(repository, TestSchedulerProvider())
         presenter.view = view
     }
@@ -38,29 +32,28 @@ class SplashPresenterMockTest {
     fun testGetLastWeather() {
         val list = listOf(mock(DailyForecast::class.java))
 
-        given(repository.getWeather()).willReturn(Single.just(list))
+        coEvery { repository.getWeather() } returns list
 
         presenter.getLastWeather()
 
-        verify(view, never()).showError(MockitoHelper.any())
-        inOrder(view).apply {
-            verify(view).showIsLoading()
-            verify(view).showIsLoaded()
+        verifySequence {
+            view.showIsLoading()
+            view.showIsLoaded()
         }
     }
 
     @Test
     fun testGetLasttWeatherFailed() {
         val error = Throwable("Got an error")
-        given(repository.getWeather()).willReturn(Single.error(error))
+
+        coEvery { repository.getWeather() } throws error
 
         presenter.getLastWeather()
 
-        inOrder(view).apply {
-            verify(view).showIsLoading()
-            verify(view).showError(error)
+        verifySequence {
+            view.showIsLoading()
+            view.showError(error)
         }
-        verify(view, never()).showIsLoaded()
     }
 
     companion object {

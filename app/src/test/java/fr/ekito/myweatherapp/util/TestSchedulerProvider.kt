@@ -1,12 +1,11 @@
 package fr.ekito.myweatherapp.util
 
-import io.reactivex.schedulers.Schedulers
-import fr.ekito.myweatherapp.util.rx.SchedulerProvider
+import fr.ekito.myweatherapp.util.coroutine.SchedulerProvider
 
 class TestSchedulerProvider : SchedulerProvider {
-    override fun io() = Schedulers.trampoline()
+    override fun io() = kotlinx.coroutines.Dispatchers.Unconfined
 
-    override fun ui() = Schedulers.trampoline()
+    override fun ui() = kotlinx.coroutines.Dispatchers.Unconfined
 
-    override fun computation() = Schedulers.trampoline()
+    override fun computation() = kotlinx.coroutines.Dispatchers.Unconfined
 }

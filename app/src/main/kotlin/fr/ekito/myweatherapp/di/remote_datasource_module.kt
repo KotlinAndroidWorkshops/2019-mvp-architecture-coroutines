@@ -1,12 +1,12 @@
 package fr.ekito.myweatherapp.di
 
+import com.jakewharton.retrofit2.adapter.kotlin.coroutines.CoroutineCallAdapterFactory
 import fr.ekito.myweatherapp.data.WeatherDataSource
 import fr.ekito.myweatherapp.di.Properties.SERVER_URL
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import org.koin.dsl.module
 import retrofit2.Retrofit
-import retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory
 import retrofit2.converter.gson.GsonConverterFactory
 import java.util.concurrent.TimeUnit
 
@@ -38,6 +38,7 @@ inline fun <reified T> createWebService(okHttpClient: OkHttpClient, url: String)
             .baseUrl(url)
             .client(okHttpClient)
             .addConverterFactory(GsonConverterFactory.create())
-            .addCallAdapterFactory(RxJava2CallAdapterFactory.create()).build()
+            .addCallAdapterFactory(CoroutineCallAdapterFactory())
+            .build()
     return retrofit.create(T::class.java)
 }

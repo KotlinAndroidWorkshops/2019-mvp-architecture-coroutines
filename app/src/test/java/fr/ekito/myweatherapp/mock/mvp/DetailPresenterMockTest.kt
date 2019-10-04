@@ -2,25 +2,21 @@ package fr.ekito.myweatherapp.mock.mvp
 
 import fr.ekito.myweatherapp.domain.entity.DailyForecast
 import fr.ekito.myweatherapp.domain.repository.DailyForecastRepository
-import fr.ekito.myweatherapp.util.MockitoHelper
 import fr.ekito.myweatherapp.util.TestSchedulerProvider
 import fr.ekito.myweatherapp.view.detail.DetailContract
 import fr.ekito.myweatherapp.view.detail.DetailPresenter
-import io.reactivex.Single
+import io.mockk.coEvery
+import io.mockk.mockk
+import io.mockk.verifySequence
 import org.junit.Before
 import org.junit.Test
-import org.mockito.BDDMockito.given
-import org.mockito.Mock
-import org.mockito.Mockito.*
-import org.mockito.MockitoAnnotations
+import org.mockito.Mockito.mock
 
 class DetailPresenterMockTest {
 
     lateinit var presenter: DetailContract.Presenter
-    @Mock
-    lateinit var view: DetailContract.View
-    @Mock
-    lateinit var repository: DailyForecastRepository
+    val view: DetailContract.View = mockk(relaxed = true)
+    val repository: DailyForecastRepository = mockk(relaxed = true)
 
     // TODO uncomment to use LiveData in Test
 //    @get:Rule
@@ -28,8 +24,6 @@ class DetailPresenterMockTest {
 
     @Before
     fun before() {
-        MockitoAnnotations.initMocks(this)
-
         presenter = DetailPresenter(repository, TestSchedulerProvider())
         presenter.view = view
     }
@@ -39,12 +33,13 @@ class DetailPresenterMockTest {
         val weather = mock(DailyForecast::class.java)
         val id = "ID"
 
-        given(repository.getWeatherDetail(id)).willReturn(Single.just(weather))
+        coEvery { repository.getWeatherDetail(id) } returns weather
 
         presenter.getDetail(id)
 
-        verify(view, never()).showError(MockitoHelper.any())
-        verify(view).showDetail(weather)
+        verifySequence {
+            view.showDetail(weather)
+        }
     }
 
     @Test
@@ -52,11 +47,12 @@ class DetailPresenterMockTest {
         val error = Throwable("Got error")
         val id = "ID"
 
-        given(repository.getWeatherDetail(id)).willReturn(Single.error(error))
+        coEvery { repository.getWeatherDetail(id) } throws error
 
         presenter.getDetail(id)
 
-        verify(view, never()).showDetail(MockitoHelper.any())
-        verify(view).showError(error)
+        verifySequence {
+            view.showError(error)
+        }
     }
 }

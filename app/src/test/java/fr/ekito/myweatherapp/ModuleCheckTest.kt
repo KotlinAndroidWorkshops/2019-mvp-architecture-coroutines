@@ -22,6 +22,7 @@ class ModuleCheckTest : KoinTest {
     fun testRemoteConfiguration() {
         koinApplication {
             androidContext(mockedAndroidContext)
+            fileProperties()
             modules(onlineWeatherApp)
         }.checkModules()
     }

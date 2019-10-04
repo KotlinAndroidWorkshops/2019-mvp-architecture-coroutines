@@ -1,35 +1,32 @@
 package fr.ekito.myweatherapp.view.weather
 
 import fr.ekito.myweatherapp.domain.repository.DailyForecastRepository
-import fr.ekito.myweatherapp.util.mvp.RxPresenter
-import fr.ekito.myweatherapp.util.rx.SchedulerProvider
-import fr.ekito.myweatherapp.util.rx.with
+import fr.ekito.myweatherapp.util.coroutine.SchedulerProvider
+import fr.ekito.myweatherapp.util.mvp.AsyncPresenter
 
 class WeatherHeaderPresenter(
-    private val dailyForecastRepository: DailyForecastRepository,
-    private val schedulerProvider: SchedulerProvider
-) : RxPresenter<WeatherHeaderContract.View>(), WeatherHeaderContract.Presenter {
+        private val dailyForecastRepository: DailyForecastRepository,
+        private val schedulerProvider: SchedulerProvider
+) : AsyncPresenter<WeatherHeaderContract.View>(schedulerProvider), WeatherHeaderContract.Presenter {
 
     override var view: WeatherHeaderContract.View? = null
 
-    override fun loadNewLocation(location: String) {
-        launch {
-            dailyForecastRepository.getWeather(location).toCompletable()
-                .with(schedulerProvider)
-                .subscribe(
-                    { view?.showLocationSearchSucceed(location) },
-                    { error -> view?.showLocationSearchFailed(location, error) })
+    override fun loadNewLocation(location: String) = launch {
+        try {
+            val list = onIO { dailyForecastRepository.getWeather(location) }
+            view?.showLocationSearchSucceed(location)
+        } catch (e: Exception) {
+            view?.showLocationSearchFailed(location, e)
         }
     }
 
-    override fun getWeatherOfTheDay() {
-        launch {
-            dailyForecastRepository.getWeather()
-                .map { it.first() }
-                .with(schedulerProvider)
-                .subscribe(
-                    { weather -> view?.showWeather(weather.location, weather) },
-                    { error -> view?.showError(error) })
+    override fun getWeatherOfTheDay() = launch {
+        try {
+            val weather = onIO { dailyForecastRepository.getWeather().first() }
+            view?.showWeather(weather.location, weather)
+        } catch (e: Throwable) {
+            view?.showError(e)
         }
     }
+
 }
